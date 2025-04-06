@@ -423,10 +423,10 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(
               _selectedIndex == 3
                   ? Icons.chat_bubble
-                  : Icons.notifications_none,
+                  : Icons.chat_bubble_outline,
               size: 30,
             ),
-            label: 'Notification',
+            label: 'Chating',
           ),
           BottomNavigationBarItem(
             icon: Icon(
@@ -492,7 +492,6 @@ class _HomeTabState extends State<HomeTab> {
     final pb = PocketBase('https://snowman0919.site');
 
     final result = await pb.collection('doko_find_post').getFullList();
-    print(result);
     return result;
   }
 
@@ -687,6 +686,8 @@ class _HomeTabState extends State<HomeTab> {
                     }
                     final posts = snapshot.data!;
                     return RefreshIndicator(
+                        color: const Color(0xFF5D6BFF),
+                        backgroundColor: const Color(0xFFE7E7FF),
                         onRefresh: () async {
                           setState(
                               () {}); // fetchPosts()가 FutureBuilder에서 다시 호출되도록 함
