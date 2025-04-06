@@ -1,11 +1,11 @@
 {
-    "name": "doko_find",
-    "short_name": "doko_find",
+    "name": "doko find",
+    "short_name": "doko",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "디미고의 잃어버린 물건들을 위하여",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -622,58 +622,108 @@ class _HomeTabState extends State<HomeTab> {
         // 리스트
         Expanded(
           child: isLostSelected == true
-              ? ListView.builder(
-                  itemCount: 5,
-                  itemBuilder: (context, index) => Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 0.0, vertical: 0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                width: 85,
-                                height: 85,
-                                color: Colors.grey.shade200,
-                                child:
-                                    const Icon(Icons.image, size: 40), // 이미지 자리
+              ? FutureBuilder<List<RecordModel>>(
+                  future: fetchPosts(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('게시물이 없습니다.'));
+                    }
+                    final posts = snapshot.data!;
+                    return RefreshIndicator(
+                        color: const Color(0xFF5D6BFF),
+                        backgroundColor: const Color(0xFFE7E7FF),
+                        onRefresh: () async {
+                          setState(
+                              () {}); // fetchPosts()가 FutureBuilder에서 다시 호출되도록 함
+                        },
+                        child: ListView.builder(
+                          itemCount: posts.length,
+                          itemBuilder: (context, index) {
+                            final post = posts[index];
+                            final title = post.getStringValue('title');
+                            final where = post.getStringValue('where');
+                            final reward = post.getStringValue('reward');
+                            final lostTime = post.getStringValue('lost_time');
+                            final encordedlostTime =
+                                formatRelativeTime(lostTime.toString());
+                            final image =
+                                post.getStringValue('field').toString();
+                            final encodedImage =
+                                image.substring(1, image.length - 1);
+
+                            return InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        DetailPage(post: post),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 0, vertical: 0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      // borderRadius: BorderRadius.circular(16),
+                                      border: Border(
+                                          bottom: BorderSide(
+                                              color: Colors.grey.shade300))),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          child: Image.network(
+                                            'https://snowman0919.site/api/files/whc6wpbuzpiw3fw/${post.id}/$encodedImage',
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12.0, horizontal: 4),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(title,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                  '잃어버린 장소: $where - $encordedlostTime',
+                                                  style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 13)),
+                                              const SizedBox(height: 4),
+                                              Text('사례: $reward',
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12.0, horizontal: 4),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('에어팟 찾아요',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 4),
-                                  Text('잃어버린 장소: 학봉관 - 10분 전',
-                                      style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 13)),
-                                  const SizedBox(height: 4),
-                                  const Text('사례: 매점 1000원',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w500)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                            );
+                          },
+                        ));
+                  },
                 )
               : FutureBuilder<List<RecordModel>>(
                   future: fetchPosts(),
@@ -707,14 +757,15 @@ class _HomeTabState extends State<HomeTab> {
                             final encodedImage =
                                 image.substring(1, image.length - 1);
 
-                            return GestureDetector(
+                            return InkWell(
                               onTap: () {
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (context) => DetailPage(post: post),
-                                //   ),
-                                // );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        DetailPage(post: post),
+                                  ),
+                                );
                               },
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -783,33 +834,164 @@ class _HomeTabState extends State<HomeTab> {
   }
 }
 
-class DetailPage extends StatelessWidget {
+class DetailPage extends StatefulWidget {
   final RecordModel post;
   const DetailPage({super.key, required this.post});
 
   @override
+  State<DetailPage> createState() => _DetailPageState();
+}
+
+class _DetailPageState extends State<DetailPage> {
+  String formatRelativeTime(String utcTimeString) {
+    final utcTime = DateTime.parse(utcTimeString);
+    final kstTime = utcTime.toLocal();
+    final now = DateTime.now();
+    final diff = now.difference(kstTime);
+
+    if (diff.inSeconds < 60) {
+      return '방금 전';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}분 전';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}시간 전';
+    } else if (diff.inDays < 30) {
+      return '${diff.inDays}일 전';
+    } else if (diff.inDays < 365) {
+      return '${(diff.inDays / 30).floor()}달 전';
+    } else {
+      return '${(diff.inDays / 365).floor()}년 전';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final post = widget.post;
     final image = post.getStringValue('field');
     final title = post.getStringValue('title');
     final where = post.getStringValue('where');
     final reward = post.getStringValue('reward');
     final lostTime = post.getStringValue('lost_time');
+    final encodedLostTime = formatRelativeTime(lostTime.toString());
+    final encodedImage =
+        Uri.encodeComponent(image.replaceAll('[', '').replaceAll(']', ''));
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(
+        title: const Text('Checkout'),
+        centerTitle: true,
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(Icons.favorite_border),
+              const SizedBox(width: 4),
+              Text('사례: $reward',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5D6BFF),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text('찾았어요!(연락)'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Image.network(
-              'https://snowman0919.site/api/files/doko_find_post/${post.id}/$image',
-              height: 200,
+              'https://snowman0919.site/api/files/doko_find_post/${post.id}/$encodedImage',
+              height: 250,
+              width: double.infinity,
               fit: BoxFit.cover,
             ),
-            const SizedBox(height: 20),
-            Text('장소: $where'),
-            Text('사례: $reward'),
-            Text('잃어버린 시간: $lostTime'),
+            const Divider(),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundImage: AssetImage('assets/snowman.png'),
+                radius: 24,
+              ),
+              title: const Text('1628 최윤혁',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Stack(
+                    alignment: Alignment.centerRight,
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      Container(
+                        width: 55,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color.fromRGBO(90, 97, 174, 1),
+                              Color.fromRGBO(104, 117, 255, 1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      const Positioned(
+                        right: 8,
+                        child: Text('97', style: TextStyle(fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text('Finder 지수란?',
+                      style: TextStyle(fontSize: 10, color: Colors.grey))
+                ],
+              ),
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('잃어버린 장소: $where - $encodedLostTime',
+                      style: TextStyle(color: Colors.grey[600])),
+                  const SizedBox(height: 8),
+                  const Wrap(
+                    spacing: 8,
+                    children: [
+                      Chip(
+                          label: Text('#악세서리', style: TextStyle(fontSize: 12))),
+                      Chip(label: Text('#에어팟', style: TextStyle(fontSize: 12))),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('에어팟 잃어버렸어요. 프로 2세대이고 실리콘 케이스가 있어요.'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 80),
           ],
         ),
       ),
