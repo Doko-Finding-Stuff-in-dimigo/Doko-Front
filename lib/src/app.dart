@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:pocketbase/pocketbase.dart';
+import '../services/auth_service.dart';
 
-import 'sample_feature/sample_item_details_view.dart';
-import 'sample_feature/sample_item_list_view.dart';
 import 'settings/settings_controller.dart';
-import 'settings/settings_view.dart';
 
-/// The Widget that configures your application.
+// The Widget that configures your application.
 class MyApp extends StatelessWidget {
   const MyApp({
     super.key,
@@ -21,12 +17,24 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Main',
+      title: 'Doko Find',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color(0xFF5765F2), // 앱 전체의 주요 색상
+        primaryColor: const Color(0xFF5765F2),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF5765F2),
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
       ),
       home: const SplashScreen(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(1.0)),
+          child: child!,
+        );
+      },
     );
   }
 }
@@ -39,17 +47,40 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
 
-    // 2초 후 로그인 화면으로 이동
-    Timer(const Duration(milliseconds: 1500), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    });
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      // Check if user is already signed in
+      final isSignedIn = await _authService.isSignedIn();
+
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                isSignedIn ? const HomeScreen() : const LoginScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error initializing app: $e');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    }
   }
 
   @override
@@ -63,9 +94,43 @@ class _SplashScreenState extends State<SplashScreen> {
             colors: [Color(0xFF84C5F4), Color(0xFF1479FF)],
           ),
         ),
-        child: Center(
-          child: Image.asset(
-            'assets/images/Onboarding.png',
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF75BDF6), Color(0xFF1565EF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 가운데 돋보기 이미지
+                Image.asset(
+                  'assets/images/Docoicon.png',
+                  width: 250,
+                  height: 250,
+                ),
+                const SizedBox(height: 40),
+                const Text(
+                  '도코',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '디미고의 잃어버린 물건들을 위하여',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                )
+              ],
+            ),
           ),
         ),
       ),
@@ -82,6 +147,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   void _onContinue() {
     String email = _emailController.text;
@@ -91,6 +157,41 @@ class _LoginScreenState extends State<LoginScreen> {
       context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      // Ensure presentingViewController is set (for iOS)
+      if (Theme.of(context).platform == TargetPlatform.iOS) {
+        // Use a method channel or native code to ensure rootViewController is assigned (this may need to be handled natively in AppDelegate.swift)
+        debugPrint('Ensure presentingViewController is properly set on iOS');
+      }
+
+      final result = await _authService.signInWithGoogle();
+      if (result != null) {
+        // 로그인 성공
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        // 로그인 실패
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google 로그인에 실패했습니다.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Google sign in error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('로그인 중 오류가 발생했습니다.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -196,9 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 48,
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            print('구글 로그인');
-                          },
+                          onPressed: _handleGoogleSignIn,
                           icon: const Icon(
                             Icons.g_mobiledata,
                             color: Colors.black,
@@ -220,8 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 WidgetStateProperty.resolveWith<Color?>(
                               (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
-                                  return Colors.grey
-                                      .withOpacity(0.1); // 눌렀을 때 효과 색상
+                                  return Colors.grey.withOpacity(0.1);
                                 }
                                 return null;
                               },
@@ -372,7 +470,26 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     ),
-    const Center(child: Text('탭 5')),
+    const SafeArea(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.construction, size: 80, color: Color(0xFF5765F2)),
+            SizedBox(height: 20),
+            Text(
+              '현재 개발 중이에요',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '곧 만나볼 수 있어요!',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    ),
   ];
 
   void _onItemTapped(int index) {
@@ -468,6 +585,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(Icons.add, color: Colors.white, size: 40),
                 onPressed: () {
                   // 버튼 눌렀을 때 동작
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const Writing(),
+                    ),
+                  );
                 },
               ),
             )
@@ -475,6 +598,27 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButtonLocation:
           FloatingActionButtonLocation.endFloat, // ✅ 겹치지 않게 띄움
     );
+  }
+}
+
+String formatRelativeTime(String utcTimeString) {
+  final utcTime = DateTime.parse(utcTimeString);
+  final kstTime = utcTime.toLocal();
+  final now = DateTime.now();
+  final diff = now.difference(kstTime);
+
+  if (diff.inSeconds < 60) {
+    return '방금 전';
+  } else if (diff.inMinutes < 60) {
+    return '${diff.inMinutes}분 전';
+  } else if (diff.inHours < 24) {
+    return '${diff.inHours}시간 전';
+  } else if (diff.inDays < 30) {
+    return '${diff.inDays}일 전';
+  } else if (diff.inDays < 365) {
+    return '${(diff.inDays / 30).floor()}달 전';
+  } else {
+    return '${(diff.inDays / 365).floor()}년 전';
   }
 }
 
@@ -493,27 +637,6 @@ class _HomeTabState extends State<HomeTab> {
 
     final result = await pb.collection('doko_find_post').getFullList();
     return result;
-  }
-
-  String formatRelativeTime(String utcTimeString) {
-    final utcTime = DateTime.parse(utcTimeString); // 2025-03-26T12:00:00.000Z
-    final kstTime = utcTime.toLocal(); // 이미 시스템 KST 기준으로 변환됨
-    final now = DateTime.now();
-    final diff = now.difference(kstTime);
-
-    if (diff.inSeconds < 60) {
-      return '방금 전';
-    } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}분 전';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours}시간 전';
-    } else if (diff.inDays < 30) {
-      return '${diff.inDays}일 전';
-    } else if (diff.inDays < 365) {
-      return '${(diff.inDays / 30).floor()}달 전';
-    } else {
-      return '${(diff.inDays / 365).floor()}년 전';
-    }
   }
 
   @override
@@ -552,7 +675,14 @@ class _HomeTabState extends State<HomeTab> {
               )),
               const SizedBox(width: 12),
               IconButton(
-                  onPressed: () => {},
+                  onPressed: () => {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationPage(),
+                          ),
+                        )
+                      },
                   icon: const Icon(Icons.notifications_none, size: 28))
             ],
           ),
@@ -834,6 +964,239 @@ class _HomeTabState extends State<HomeTab> {
   }
 }
 
+class Writing extends StatefulWidget {
+  const Writing({super.key});
+
+  @override
+  State<Writing> createState() => _WritingState();
+}
+
+class _WritingState extends State<Writing> {
+  bool isLostSelected = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('새 게시글 작성'),
+        actions: [
+          TextButton(
+            onPressed: () {},
+            child: const Text(
+              '임시 저장하기',
+              style: TextStyle(color: Color(0xFF5765F2)),
+            ),
+          )
+        ],
+        backgroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // 이미지 업로드 박스
+              Container(
+                width: double.infinity,
+                height: 100,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: const Center(
+                  child: Icon(Icons.camera_alt, size: 40, color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => isLostSelected = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isLostSelected
+                                ? const Color(0xFF5D6BFF)
+                                : const Color(0xFFE7E7FF),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '물건 찾아요',
+                              style: TextStyle(
+                                color: isLostSelected
+                                    ? Colors.white
+                                    : const Color(0xFF5D6BFF),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => isLostSelected = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: !isLostSelected
+                                ? const Color(0xFF5D6BFF)
+                                : const Color(0xFFE7E7FF),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '주인 찾아요',
+                              style: TextStyle(
+                                color: !isLostSelected
+                                    ? Colors.white
+                                    : const Color(0xFF5D6BFF),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                decoration: InputDecoration(
+                  hintText:
+                      !isLostSelected ? '주인을 찾고 싶은 물건이 뭔가요?' : '찾고 싶은 물건이 뭔가요?',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF5765F2)), // 포커스 상태
+                  ),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "사례",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 가격 입력
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  prefixText: '₩ ',
+                  hintText: '(선택 ex.매점, 감사)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF5765F2)), // 포커스 상태
+                  ),
+                ),
+              ),
+              // const SizedBox(height: 8),
+
+              // // 제안 허용 여부
+              // Row(
+              //   children: [
+              //     Checkbox(value: false, onChanged: (value) {}),
+              //     const Text('Open to offers'),
+              //   ],
+              // ),
+              const SizedBox(height: 16),
+
+              const Padding(
+                padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "설명",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              TextField(
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: !isLostSelected
+                      ? '주인을 찾고 싶은 물건의 간단한 설명을 입력해주세요!'
+                      : '찾고 싶은 물건의 특징, 브렌드, 제조사, 소재, 크기 등의 설명을 입력해주세요!',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF5765F2)), // 포커스 상태
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              ListTile(
+                title: const Text('만날 장소'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {},
+              ),
+              const Divider(),
+
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '선생님을 통해 전달하기',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  Switch(value: false, onChanged: (value) {}),
+                ],
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 70,
+        color: const Color(0xFF5765F2),
+        child: const Padding(
+          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+          child: Center(
+            child: Text(
+              '게시하기',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class DetailPage extends StatefulWidget {
   final RecordModel post;
   const DetailPage({super.key, required this.post});
@@ -843,27 +1206,6 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
-  String formatRelativeTime(String utcTimeString) {
-    final utcTime = DateTime.parse(utcTimeString);
-    final kstTime = utcTime.toLocal();
-    final now = DateTime.now();
-    final diff = now.difference(kstTime);
-
-    if (diff.inSeconds < 60) {
-      return '방금 전';
-    } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}분 전';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours}시간 전';
-    } else if (diff.inDays < 30) {
-      return '${diff.inDays}일 전';
-    } else if (diff.inDays < 365) {
-      return '${(diff.inDays / 30).floor()}달 전';
-    } else {
-      return '${(diff.inDays / 365).floor()}년 전';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
@@ -1009,7 +1351,29 @@ class ExploreTab extends StatefulWidget {
 class _ExploreTabState extends State<ExploreTab> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold();
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.construction, size: 80, color: Color(0xFF5765F2)),
+              SizedBox(height: 20),
+              Text(
+                '현재 개발 중이에요',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 12),
+              Text(
+                '곧 만나볼 수 있어요!',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1092,10 +1456,32 @@ class NotificationPage extends StatefulWidget {
   _NotificationPageState createState() => _NotificationPageState();
 }
 
-class _NotificationPageState extends State<ExploreTab> {
+class _NotificationPageState extends State<NotificationPage> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold();
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.construction, size: 80, color: Color(0xFF5765F2)),
+              SizedBox(height: 20),
+              Text(
+                '현재 개발 중이에요',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 12),
+              Text(
+                '곧 만나볼 수 있어요!',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
