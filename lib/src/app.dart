@@ -748,7 +748,6 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
         const SizedBox(height: 12),
-
         // 리스트
         Expanded(
           child: isLostSelected == true
@@ -770,6 +769,7 @@ class _HomeTabState extends State<HomeTab> {
                               () {}); // fetchPosts()가 FutureBuilder에서 다시 호출되도록 함
                         },
                         child: ListView.builder(
+                          padding: EdgeInsets.zero,
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
                             final post = posts[index];
@@ -873,6 +873,7 @@ class _HomeTabState extends State<HomeTab> {
                               () {}); // fetchPosts()가 FutureBuilder에서 다시 호출되도록 함
                         },
                         child: ListView.builder(
+                          padding: EdgeInsets.zero,
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
                             final post = posts[index];
@@ -976,224 +977,230 @@ class _WritingState extends State<Writing> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('새 게시글 작성'),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              '임시 저장하기',
-              style: TextStyle(color: Color(0xFF5765F2)),
-            ),
-          )
-        ],
-        backgroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // 이미지 업로드 박스
-              Container(
-                width: double.infinity,
-                height: 100,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
+    return GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            title: const Text('새 게시글 작성'),
+            actions: [
+              TextButton(
+                onPressed: () {},
+                child: const Text(
+                  '임시 저장하기',
+                  style: TextStyle(color: Color(0xFF5765F2)),
                 ),
-                child: const Center(
-                  child: Icon(Icons.camera_alt, size: 40, color: Colors.grey),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => isLostSelected = true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isLostSelected
-                                ? const Color(0xFF5D6BFF)
-                                : const Color(0xFFE7E7FF),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '물건 찾아요',
-                              style: TextStyle(
-                                color: isLostSelected
-                                    ? Colors.white
-                                    : const Color(0xFF5D6BFF),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => isLostSelected = false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: !isLostSelected
-                                ? const Color(0xFF5D6BFF)
-                                : const Color(0xFFE7E7FF),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '주인 찾아요',
-                              style: TextStyle(
-                                color: !isLostSelected
-                                    ? Colors.white
-                                    : const Color(0xFF5D6BFF),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              TextField(
-                decoration: InputDecoration(
-                  hintText:
-                      !isLostSelected ? '주인을 찾고 싶은 물건이 뭔가요?' : '찾고 싶은 물건이 뭔가요?',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF5765F2)), // 포커스 상태
-                  ),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "사례",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-
-              // 가격 입력
-              TextField(
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  prefixText: '₩ ',
-                  hintText: '(선택 ex.매점, 감사)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF5765F2)), // 포커스 상태
-                  ),
-                ),
-              ),
-              // const SizedBox(height: 8),
-
-              // // 제안 허용 여부
-              // Row(
-              //   children: [
-              //     Checkbox(value: false, onChanged: (value) {}),
-              //     const Text('Open to offers'),
-              //   ],
-              // ),
-              const SizedBox(height: 16),
-
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "설명",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-              TextField(
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: !isLostSelected
-                      ? '주인을 찾고 싶은 물건의 간단한 설명을 입력해주세요!'
-                      : '찾고 싶은 물건의 특징, 브렌드, 제조사, 소재, 크기 등의 설명을 입력해주세요!',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF5765F2)), // 포커스 상태
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              ListTile(
-                title: const Text('만날 장소'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {},
-              ),
-              const Divider(),
-
-              Row(
+              )
+            ],
+            backgroundColor: Colors.white,
+          ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 children: [
-                  const Expanded(
-                    child: Text(
-                      '선생님을 통해 전달하기',
-                      style: TextStyle(fontSize: 14),
+                  // 이미지 업로드 박스
+                  Container(
+                    width: double.infinity,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                    ),
+                    child: const Center(
+                      child:
+                          Icon(Icons.camera_alt, size: 40, color: Colors.grey),
                     ),
                   ),
-                  Switch(value: false, onChanged: (value) {}),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => isLostSelected = true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isLostSelected
+                                    ? const Color(0xFF5D6BFF)
+                                    : const Color(0xFFE7E7FF),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '물건 찾아요',
+                                  style: TextStyle(
+                                    color: isLostSelected
+                                        ? Colors.white
+                                        : const Color(0xFF5D6BFF),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => isLostSelected = false),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: !isLostSelected
+                                    ? const Color(0xFF5D6BFF)
+                                    : const Color(0xFFE7E7FF),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '주인 찾아요',
+                                  style: TextStyle(
+                                    color: !isLostSelected
+                                        ? Colors.white
+                                        : const Color(0xFF5D6BFF),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: !isLostSelected
+                          ? '주인을 찾고 싶은 물건이 뭔가요?'
+                          : '찾고 싶은 물건이 뭔가요?',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF5765F2)), // 포커스 상태
+                      ),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "사례",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 가격 입력
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      prefixText: '₩ ',
+                      hintText: '(선택 ex.매점, 감사)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF5765F2)), // 포커스 상태
+                      ),
+                    ),
+                  ),
+                  // const SizedBox(height: 8),
+
+                  // // 제안 허용 여부
+                  // Row(
+                  //   children: [
+                  //     Checkbox(value: false, onChanged: (value) {}),
+                  //     const Text('Open to offers'),
+                  //   ],
+                  // ),
+                  const SizedBox(height: 16),
+
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "설명",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextField(
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      hintText: !isLostSelected
+                          ? '주인을 찾고 싶은 물건의 간단한 설명을 입력해주세요!'
+                          : '찾고 싶은 물건의 특징, 브렌드, 제조사, 소재, 크기 등의 설명을 입력해주세요!',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF5765F2)), // 포커스 상태
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  ListTile(
+                    title: const Text('만날 장소'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {},
+                  ),
+                  const Divider(),
+
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '선생님을 통해 전달하기',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      Switch(value: false, onChanged: (value) {}),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
                 ],
               ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        height: 70,
-        color: const Color(0xFF5765F2),
-        child: const Padding(
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-          child: Center(
-            child: Text(
-              '게시하기',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
             ),
           ),
-        ),
-      ),
-    );
+          bottomNavigationBar: Container(
+            height: 70,
+            color: const Color(0xFF5765F2),
+            child: const Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+              child: Center(
+                child: Text(
+                  '게시하기',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+        ));
   }
 }
 
