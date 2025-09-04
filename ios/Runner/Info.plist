@@ -25,6 +25,8 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.1089946968312-n0s6n875vfd8csai1l00s853tdr22719</string>
@@ -34,9 +36,12 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GIDClientID</key>
-	<string>com.googleusercontent.apps.1089946968312-n0s6n875vfd8csai1l00s853tdr22719</string>
+	<string>1089946968312-n0s6n875vfd8csai1l00s853tdr22719.apps.googleusercontent.com</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
+		<string>google</string>
+		<string>com.google</string>
+		<string>com.googleusercontent.apps.1089946968312-n0s6n875vfd8csai1l00s853tdr22719</string>
 		<string>googlechromes</string>
 		<string>comgooglemaps</string>
 	</array>
@@ -67,5 +72,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Image picker permissions -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>사진 보관함에서 이미지를 선택하기 위해 권한이 필요합니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>사진을 찍어 업로드하기 위해 카메라 권한이 필요합니다.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>이미지를 저장하기 위해 사진 보관함 접근 권한이 필요합니다.</string>
 </dict>
 </plist>

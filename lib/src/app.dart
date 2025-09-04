@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:pocketbase/pocketbase.dart';
 import '../services/auth_service.dart';
-
+import 'package:image_picker/image_picker.dart';
 import 'settings/settings_controller.dart';
 
 // The Widget that configures your application.
@@ -975,6 +975,28 @@ class Writing extends StatefulWidget {
 class _WritingState extends State<Writing> {
   bool isLostSelected = true;
 
+  XFile? _image; //이미지를 담을 변수 선언
+  final ImagePicker picker = ImagePicker(); //ImagePicker 초기화
+
+  // 이미지를 가져오는 함수
+  Future<void> getImage(ImageSource imageSource) async {
+    try {
+      final XFile? pickedFile = await picker.pickImage(source: imageSource);
+      if (pickedFile != null) {
+        if (!mounted) return;
+        setState(() {
+          _image = XFile(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('Image pick failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('이미지를 불러오지 못했어요. 다시 시도해 주세요.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -1002,17 +1024,20 @@ class _WritingState extends State<Writing> {
               child: Column(
                 children: [
                   // 이미지 업로드 박스
-                  Container(
-                    width: double.infinity,
-                    height: 100,
-                    decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF83828b)),
-                        borderRadius: BorderRadius.circular(10)),
-                    child: const Center(
-                      child:
-                          Icon(Icons.camera_alt, size: 40, color: Colors.grey),
-                    ),
-                  ),
+                  Ink(
+                      width: double.infinity,
+                      height: 100,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF83828b)),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: InkWell(
+                        onTap: () async => await getImage(ImageSource.gallery),
+                        borderRadius: BorderRadius.circular(10),
+                        child: const Center(
+                          child: Icon(Icons.camera_alt,
+                              size: 40, color: Colors.grey),
+                        ),
+                      )),
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
