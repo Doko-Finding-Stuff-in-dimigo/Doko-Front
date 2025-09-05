@@ -1238,6 +1238,8 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
+  bool notifyTags = false;
+  bool bookmarked = false;
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
@@ -1247,6 +1249,17 @@ class _DetailPageState extends State<DetailPage> {
     final reward = post.getStringValue('reward');
     final lostTime = post.getStringValue('lost_time');
     final encodedLostTime = formatRelativeTime(lostTime.toString());
+    // Try common description fields; fall back to placeholder text
+    String description = post.getStringValue('description');
+    if (description.isEmpty) {
+      description = post.getStringValue('desc');
+    }
+    if (description.isEmpty) {
+      description = post.getStringValue('content');
+    }
+    if (description.isEmpty) {
+      description = '에어팟 잃어버렸어요. 프로 2세대이고 실리콘 케이스가 있어요.';
+    }
     final encodedImage =
         Uri.encodeComponent(image.replaceAll('[', '').replaceAll(']', ''));
 
@@ -1260,8 +1273,22 @@ class _DetailPageState extends State<DetailPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              const Icon(Icons.favorite_border),
-              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () => setState(() => bookmarked = !bookmarked),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    bookmarked ? Icons.bookmark : Icons.bookmark_border,
+                    size: 24,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               Text('사례: $reward',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               const Spacer(),
@@ -1361,7 +1388,68 @@ class _DetailPageState extends State<DetailPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text('에어팟 잃어버렸어요. 프로 2세대이고 실리콘 케이스가 있어요.'),
+                  Text(description),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Hashtag notification row
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200),
+                  bottom: BorderSide(color: Colors.grey.shade200),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text('#악세서리 #에어팟 테그 알림 받기'),
+                  ),
+                  GestureDetector(
+                    onTap: () => setState(() => notifyTags = !notifyTags),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('알람설정'),
+                          const SizedBox(width: 8),
+                          Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              Icon(
+                                notifyTags
+                                    ? Icons.notifications_active
+                                    : Icons.notifications_none,
+                              ),
+                              Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(
+                                      color: Colors.grey.shade400, width: 1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    '1',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
